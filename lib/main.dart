@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(const MyApp());
@@ -22,6 +25,127 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const AppPrincipal(),
+    );
+  }
+}
+
+class WeatherService {
+  final String apiKey = "0d423f3ab994d4c07877121e620bf396";
+
+  // Buscar clima por cidade
+  Future<Map<String, dynamic>> getWeatherByCity(String city) async {
+    final url = Uri.parse(
+      "https://api.openweathermap.org/data/2.5/weather?q=$city&units=metric&lang=pt_br&appid=0d423f3ab994d4c07877121e620bf396",
+    );
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception("Erro ao buscar clima: ${response.body}");
+    }
+  }
+
+  // Buscar clima por coordenadas
+  Future<Map<String, dynamic>> getWeatherByLocation(
+    double lat,
+    double lon,
+  ) async {
+    final url = Uri.parse(
+      "https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&units=metric&lang=pt_br&appid=0d423f3ab994d4c07877121e620bf396",
+    );
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception("Erro ao buscar clima: ${response.body}");
+    }
+  }
+}
+
+class WeatherWidget extends StatefulWidget {
+  const WeatherWidget({super.key});
+
+  @override
+  State<WeatherWidget> createState() => _WeatherWidgetState();
+}
+
+class _WeatherWidgetState extends State<WeatherWidget> {
+  final weatherService = WeatherService();
+  Map<String, dynamic>? data;
+  String? erro;
+  bool carregando = true;
+
+  @override
+  void initState() {
+    super.initState();
+    buscarClima();
+  }
+
+  Future<void> buscarClima() async {
+    setState(() {
+      carregando = true;
+      erro = null;
+    });
+
+    try {
+      // Solicitar permissão e pegar localização
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        throw Exception("Permissão de localização negada");
+      }
+
+      Position pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      final resultado = await weatherService.getWeatherByLocation(
+        pos.latitude,
+        pos.longitude,
+      );
+
+      setState(() {
+        data = resultado;
+        carregando = false;
+      });
+    } catch (e) {
+      setState(() {
+        erro = e.toString();
+        carregando = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (carregando) return const CircularProgressIndicator();
+
+    if (erro != null) return Text('Erro: $erro');
+
+    return Column(
+      children: [
+        Text(
+          "${data!['main']['temp']}°C",
+          style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          data!['weather'][0]['description'],
+          style: const TextStyle(fontSize: 16),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "Cidade: ${data!['name']}",
+          style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+        ),
+      ],
     );
   }
 }
@@ -68,15 +192,71 @@ class DonoLoja {
 /* ================= DADOS ================= */
 final List<Produto> produtos = [
   Produto(
-    nome: 'Vestido',
+    nome: 'Vestido Longo',
     preco: 25,
-    imagem: 'assets/img/woman-2537564_1280.jpg',
+    imagem: 'assets/img/vestidolongo.jpg',
   ),
   Produto(
-    nome: 'Vestidos',
+    nome: 'Vestido Rosa',
     preco: 20,
-    imagem: 'assets/img/woman-6115105_1280.jpg',
+    imagem: 'assets/img/vestidorosa.jpg',
   ),
+  Produto(
+    nome: 'Vestido Verde',
+    preco: 20,
+    imagem: 'assets/img/vestidoverde.jpg',
+  ),
+  Produto(
+    nome: 'Vestido Verde Escuro',
+    preco: 20,
+    imagem: 'assets/img/vestidoverdeescuro.jpg',
+  ),
+  Produto(
+    nome: 'Vestido Azul Longo',
+    preco: 20,
+    imagem: 'assets/img/vestidoazullongo.jpg',
+  ),
+  Produto(
+    nome: 'Vestido Branco Longo',
+    preco: 20,
+    imagem: 'assets/img/vestidobrancolongo.jpg',
+  ),
+  Produto(
+    nome: 'Vestido Preto Curto',
+    preco: 20,
+    imagem: 'assets/img/vestidopretocurto.jpg',
+  ),
+  Produto(
+    nome: 'Vestido Rosa',
+    preco: 20,
+    imagem: 'assets/img/vestidorosa1.jpg',
+  ),
+  Produto(
+    nome: 'Vestido Vermelho',
+    preco: 20,
+    imagem: 'assets/img/vestidovermelho.jpg',
+  ),
+  Produto(
+    nome: 'Vestido Laranja',
+    preco: 20,
+    imagem: 'assets/img/vestidolaranja.jpg',
+  ),
+  Produto(
+    nome: 'Vestido Amarelo',
+    preco: 20,
+    imagem: 'assets/img/vestidoamarelo.jpg',
+  ),
+  Produto(
+    nome: 'Vestido Azul e branco',
+    preco: 20,
+    imagem: 'assets/img/vestidoazulebranco.jpg',
+  ),
+  Produto(
+    nome: 'Vestido Flor',
+    preco: 20,
+    imagem: 'assets/img/vestidoflor.jpg',
+  ),
+  Produto(nome: 'Macacão Floral', preco: 20, imagem: 'assets/img/macacao.jpg'),
   Produto(
     nome: 'Roupas de bazar',
     preco: 20,
@@ -89,22 +269,22 @@ final List<Produto> produtos = [
   ),
   Produto(
     nome: 'Corte Feminino',
-    preco: 20,
+    preco: 30,
     imagem: 'assets/img/mulher-fazendo-tratamento-em-cabeleireiro.jpg',
   ),
   Produto(
-    nome: 'Hidratação',
-    preco: 50,
+    nome: 'Sobrancelha',
+    preco: 25,
     imagem: 'assets/img/spa-4481538_1280.jpg',
   ),
   Produto(
-    nome: 'Escova',
-    preco: 50,
+    nome: 'Hidratação com Escova',
+    preco: 30,
     imagem: 'assets/img/haircut-834280_1280.jpg',
   ),
   Produto(
     nome: 'Mão e pé',
-    preco: 50,
+    preco: 30,
     imagem: 'assets/img/people-2587157_1280.jpg',
   ),
 ];
@@ -144,8 +324,10 @@ class _AppPrincipalState extends State<AppPrincipal> {
       LojaPage(
         onAddCarrinho: (p) {
           setState(() {
-            carrinho.add(p);
-            quantidade[p] = (quantidade[p] ?? 0) + 1;
+            if (!carrinho.contains(p)) {
+              carrinho.add(p); // só adiciona se ainda não estiver
+            }
+            quantidade[p] = (quantidade[p] ?? 0) + 1; // aumenta a quantidade
           });
         },
         onToggleFavorito: (p) {
@@ -249,6 +431,11 @@ class HomePage extends StatelessWidget {
       children: [
         const CarouselHome(),
         const SizedBox(height: 20),
+
+        // 🌤️ CLIMA AQUI
+        const Center(child: WeatherWidget()),
+
+        const SizedBox(height: 20),
         const ClockDateWidget(),
         const SizedBox(height: 20),
         const Text(
@@ -270,6 +457,8 @@ class HomePage extends StatelessWidget {
     );
   }
 }
+
+final String apiKey = "0d423f3ab994d4c07877121e620bf396";
 
 /* ================= RELÓGIO ================= */
 class ClockDateWidget extends StatefulWidget {
@@ -426,6 +615,7 @@ class _LojaPageState extends State<LojaPage> {
 }
 
 /* ================= CARRINHO ================= */
+/* ================= CARRINHO ================= */
 class CarrinhoPage extends StatefulWidget {
   final VoidCallback onUpdate;
   const CarrinhoPage({super.key, required this.onUpdate});
@@ -459,7 +649,33 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
                 leading: Image.asset(p.imagem, width: 50, fit: BoxFit.cover),
                 title: Text(p.nome),
                 subtitle: Text(
-                  'R\$ ${(p.preco * quantidade[p]!).toStringAsFixed(2)}',
+                  'Quantidade: ${quantidade[p]!} • R\$ ${(p.preco * quantidade[p]!).toStringAsFixed(2)}',
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove),
+                      onPressed: () {
+                        setState(() {
+                          if (quantidade[p]! > 1) {
+                            quantidade[p] = quantidade[p]! - 1;
+                          } else {
+                            carrinho.remove(p);
+                            quantidade.remove(p);
+                          }
+                        });
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () {
+                        setState(() {
+                          quantidade[p] = quantidade[p]! + 1;
+                        });
+                      },
+                    ),
+                  ],
                 ),
               );
             },
