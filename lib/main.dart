@@ -3,8 +3,10 @@ import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:qr_flutter/qr_flutter.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -189,6 +191,54 @@ class DonoLoja {
   });
 }
 
+// Calcula CRC16-CCITT (padrão PIX)
+String calcularCRC16(String payload) {
+  int crc = 0xFFFF;
+
+  for (int i = 0; i < payload.length; i++) {
+    crc ^= (payload.codeUnitAt(i) << 8);
+
+    for (int j = 0; j < 8; j++) {
+      if ((crc & 0x8000) != 0) {
+        crc = (crc << 1) ^ 0x1021;
+      } else {
+        crc <<= 1;
+      }
+      crc &= 0xFFFF;
+    }
+  }
+
+  return crc.toRadixString(16).toUpperCase().padLeft(4, '0');
+}
+
+// Gera PIX dinâmico com valor e ID do pedido
+String gerarPixDinamico({
+  required String chavePix,
+  required String nome,
+  required String cidade,
+  required double valor,
+  required String idPedido,
+}) {
+  String valorFormatado = valor.toStringAsFixed(2);
+
+  String payloadSemCRC =
+      "000201"
+      "26580014BR.GOV.BCB.PIX"
+      "01${chavePix.length.toString().padLeft(2, '0')}$chavePix"
+      "52040000"
+      "5303986"
+      "54${valorFormatado.length.toString().padLeft(2, '0')}$valorFormatado"
+      "5802BR"
+      "59${nome.length.toString().padLeft(2, '0')}$nome"
+      "60${cidade.length.toString().padLeft(2, '0')}$cidade"
+      "62${(idPedido.length + 2).toString().padLeft(2, '0')}01$idPedido"
+      "6304";
+
+  String crc = calcularCRC16(payloadSemCRC);
+
+  return payloadSemCRC + crc;
+}
+
 /* ================= DADOS ================= */
 final List<Produto> produtos = [
   Produto(
@@ -325,9 +375,9 @@ class _AppPrincipalState extends State<AppPrincipal> {
         onAddCarrinho: (p) {
           setState(() {
             if (!carrinho.contains(p)) {
-              carrinho.add(p); // só adiciona se ainda não estiver
+              carrinho.add(p);
             }
-            quantidade[p] = (quantidade[p] ?? 0) + 1; // aumenta a quantidade
+            quantidade[p] = (quantidade[p] ?? 0) + 1;
           });
         },
         onToggleFavorito: (p) {
@@ -357,6 +407,7 @@ class _AppPrincipalState extends State<AppPrincipal> {
     );
   }
 }
+
 
 /* ================= HOME ================= */
 class CarouselHome extends StatefulWidget {
@@ -721,25 +772,44 @@ class CheckoutPixPage extends StatelessWidget {
       (s, p) => s + (p.preco * (quantidade[p] ?? 1)),
     );
 
+    // Gera um ID único de pedido (pode ser timestamp ou UUID)
+    String idPedido = DateTime.now().millisecondsSinceEpoch.toString();
+
+    // Gera QR dinâmico
+    String payload = gerarPixDinamico(
+      chavePix: "84992160269",
+      nome: "Gabriel Bacelar",
+      cidade: "NATAL",
+      valor: total,
+      idPedido: idPedido,
+    );
+
     return Scaffold(
       appBar: AppBar(title: const Text('Pagamento PIX')),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            const Icon(Icons.qr_code, size: 120),
+            QrImageView(
+              data: payload,
+              size: 250,
+              backgroundColor: Colors.white,
+            ),
+            const SizedBox(height: 20),
             Text(
               'Total: R\$ ${total.toStringAsFixed(2)}',
               style: const TextStyle(fontSize: 24),
             ),
             const SizedBox(height: 20),
-            const SelectableText('84992160269'),
+            SelectableText('Chave PIX: 84992160269'),
             const Spacer(),
             ElevatedButton(
               onPressed: () {
+                // Limpa carrinho e volta
                 carrinho.clear();
                 quantidade.clear();
                 Navigator.pop(context);
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Pedido finalizado!')),
                 );
