@@ -1,12 +1,21 @@
+import 'pages/login_page.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:qr_flutter/qr_flutter.dart';
+import 'services/pedido_service.dart';
+
+import 'package:firebase_core/firebase_core.dart';
+
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(const MyApp());
 }
 
@@ -26,7 +35,7 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: const AppPrincipal(),
+      home: const LoginPage(),
     );
   }
 }
@@ -407,7 +416,6 @@ class _AppPrincipalState extends State<AppPrincipal> {
     );
   }
 }
-
 
 /* ================= HOME ================= */
 class CarouselHome extends StatefulWidget {
@@ -804,17 +812,24 @@ class CheckoutPixPage extends StatelessWidget {
             SelectableText('Chave PIX: 84992160269'),
             const Spacer(),
             ElevatedButton(
-              onPressed: () {
-                // Limpa carrinho e volta
+              onPressed: () async {
+                final pedidoService = PedidoService();
+
+                await pedidoService.salvarPedido(
+                  total,
+                  carrinho.map((p) => p.nome).toList(),
+                );
+
                 carrinho.clear();
                 quantidade.clear();
+
                 Navigator.pop(context);
 
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Pedido finalizado!')),
+                  const SnackBar(content: Text("Pedido salvo no banco")),
                 );
               },
-              child: const Text('Finalizar Pedido'),
+              child: const Text("Finalizar Pedido"),
             ),
           ],
         ),

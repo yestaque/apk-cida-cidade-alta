@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "592777939435",
+    "project_id": "fluttergabrielprojetocriar",
+    "storage_bucket": "fluttergabrielprojetocriar.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:592777939435:android:4c345ce44ef617cda931ae",
+        "android_client_info": {
+          "package_name": "com.appgabriel.lojavirtual"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9B6MCVTIB7TgIZMN6dDtiJCua5z1r5W4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:592777939435:android:64c9bf1fe2cc4f49a931ae",
+        "android_client_info": {
+          "package_name": "com.example.flutter_layout"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9B6MCVTIB7TgIZMN6dDtiJCua5z1r5W4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:592777939435:android:9f00bfb08b5f618ca931ae",
+        "android_client_info": {
+          "package_name": "com.gabrielfreire.loginapp1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9B6MCVTIB7TgIZMN6dDtiJCua5z1r5W4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
