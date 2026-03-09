@@ -33,11 +33,17 @@ class _RegisterPageState extends State<RegisterPage> {
       email.text,
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Conta criada com sucesso")),
-    );
+   ScaffoldMessenger.of(context).showSnackBar(
+  const SnackBar(content: Text("Conta criada com sucesso")),
+);
 
-    Navigator.pop(context);
+Future.delayed(const Duration(seconds: 2), () {
+  Navigator.pop(context);
+
+ScaffoldMessenger.of(context).showSnackBar(
+  const SnackBar(content: Text("Conta criada! Faça login.")),
+);
+});
 
   } catch (e) {
 

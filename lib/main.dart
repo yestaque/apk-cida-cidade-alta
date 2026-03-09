@@ -356,10 +356,10 @@ Map<Produto, List<Avaliacao>> avaliacoes = {};
 final dono = DonoLoja(
   nome: 'Gabriel Freire Bacelar',
   estado: 'Rio Grande do Norte',
-  telefone: '+55 84 99216-0269',
+  telefone: '+55 84 99166-6404',
   email: 'gabrielbacelar1000@gmail.com',
   descricao:
-      'Sou desenvolvedor web, mobile e design 3D. Desenvolvi esta loja de bazar virtual para venda de roupas e salão de beleza. Eu vendo sites, aplicativos móveis e design 3d para e-commerce faço um preço ótimo! Entre em contato comigo para saber sobre nossos serviços!',
+      'Sou desenvolvedor web, mobile e design 3D. Desenvolvi esta loja de bazar virtual para venda de roupas e salão de beleza. Eu vendo sites, aplicativos móveis e design 3d para e-commerce faço um preço ótimo! Entre em contato comigo: 84 99166-6404 chame no zap ou ligue para mim para saber sobre nossos serviços de tecnologia como sites e aplicativos!',
   idade: 22,
 );
 
