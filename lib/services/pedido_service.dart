@@ -1,21 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class PedidoService {
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  final db = FirebaseFirestore.instance;
+  Future<void> salvarPedido(double total, List<String> produtos) async {
+    try {
+      print("Salvando pedido no Firestore...");
 
-  salvarPedido(double total, List produtos) async {
+      await _db.collection("pedidos").add({
+        "total": total,
+        "produtos": produtos,
+        "data": DateTime.now(),
+        "status": "pendente",
+      });
 
-    final user = FirebaseAuth.instance.currentUser;
-
-    await db.collection("pedidos").add({
-      "usuario": user!.uid,
-      "total": total,
-      "produtos": produtos,
-      "data": DateTime.now(),
-    });
-
+      print("Pedido salvo no Firestore!");
+    } catch (e) {
+      print("Erro ao salvar pedido no Firestore: $e");
+      throw e; // Repassa o erro para o botão tratar
+    }
   }
-
 }

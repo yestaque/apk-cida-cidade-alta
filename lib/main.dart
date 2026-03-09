@@ -13,9 +13,7 @@ import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
   runApp(const MyApp());
 }
 
@@ -97,13 +95,14 @@ class _WeatherWidgetState extends State<WeatherWidget> {
   }
 
   Future<void> buscarClima() async {
+    if (!mounted) return; // evita chamar setState se o widget já foi destruído
+
     setState(() {
       carregando = true;
       erro = null;
     });
 
     try {
-      // Solicitar permissão e pegar localização
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -123,11 +122,13 @@ class _WeatherWidgetState extends State<WeatherWidget> {
         pos.longitude,
       );
 
+      if (!mounted) return; // ✅ verificação antes de atualizar a UI
       setState(() {
         data = resultado;
         carregando = false;
       });
     } catch (e) {
+      if (!mounted) return; // ✅ mesma verificação
       setState(() {
         erro = e.toString();
         carregando = false;
@@ -485,24 +486,103 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final produtosDestaque = produtos.take(4).toList();
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // Carrossel
         const CarouselHome(),
+
         const SizedBox(height: 20),
 
-        // 🌤️ CLIMA AQUI
+        // Clima
         const Center(child: WeatherWidget()),
 
         const SizedBox(height: 20),
+
+        // Relógio
         const ClockDateWidget(),
+
         const SizedBox(height: 20),
+
+        const Text(
+          "Produtos em Destaque",
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+
+        const SizedBox(height: 10),
+
+        SizedBox(
+          height: 220,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: produtosDestaque.length,
+            itemBuilder: (context, i) {
+              final p = produtosDestaque[i];
+
+              return Container(
+                width: 160,
+                margin: const EdgeInsets.only(right: 10),
+                child: Card(
+                  elevation: 4,
+                  child: Column(
+                    children: [
+                      Expanded(child: Image.asset(p.imagem, fit: BoxFit.cover)),
+
+                      Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          children: [
+                            Text(
+                              p.nome,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            Text("R\$ ${p.preco.toStringAsFixed(2)}"),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        const Text(
+          "Categorias",
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+
+        const SizedBox(height: 10),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: const [
+            CategoriaItem(icon: Icons.checkroom, nome: "Roupas"),
+
+            CategoriaItem(icon: Icons.spa, nome: "Beleza"),
+
+            CategoriaItem(icon: Icons.face, nome: "Salão"),
+          ],
+        ),
+
+        const SizedBox(height: 30),
+
         const Text(
           'Bem-vindo à Loja de Bazar e Salão de Beleza!',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
+
         const SizedBox(height: 20),
+
         ElevatedButton(
           onPressed: () {
             Navigator.push(
@@ -510,8 +590,32 @@ class HomePage extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const PerfilDonoPage()),
             );
           },
-          child: const Text('Sobre o Desenvolvedor do Aplicativo'),
+          child: const Text('Sobre o Desenvolvedor'),
         ),
+      ],
+    );
+  }
+}
+
+class CategoriaItem extends StatelessWidget {
+  final IconData icon;
+  final String nome;
+
+  const CategoriaItem({super.key, required this.icon, required this.nome});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 28,
+          backgroundColor: Colors.purple,
+          child: Icon(icon, color: Colors.white),
+        ),
+
+        const SizedBox(height: 6),
+
+        Text(nome),
       ],
     );
   }
@@ -770,20 +874,28 @@ class _CarrinhoPageState extends State<CarrinhoPage> {
 }
 
 /* ================= CHECKOUT ================= */
-class CheckoutPixPage extends StatelessWidget {
+class CheckoutPixPage extends StatefulWidget {
   const CheckoutPixPage({super.key});
 
   @override
+  State<CheckoutPixPage> createState() => _CheckoutPixPageState();
+}
+
+class _CheckoutPixPageState extends State<CheckoutPixPage> {
+  bool carregando = false;
+
+  @override
   Widget build(BuildContext context) {
+    // Calcula total do carrinho
     double total = carrinho.fold(
       0,
       (s, p) => s + (p.preco * (quantidade[p] ?? 1)),
     );
 
-    // Gera um ID único de pedido (pode ser timestamp ou UUID)
+    // Gera ID único do pedido
     String idPedido = DateTime.now().millisecondsSinceEpoch.toString();
 
-    // Gera QR dinâmico
+    // Gera payload PIX
     String payload = gerarPixDinamico(
       chavePix: "84992160269",
       nome: "Gabriel Bacelar",
@@ -811,26 +923,45 @@ class CheckoutPixPage extends StatelessWidget {
             const SizedBox(height: 20),
             SelectableText('Chave PIX: 84992160269'),
             const Spacer(),
-            ElevatedButton(
-              onPressed: () async {
-                final pedidoService = PedidoService();
+            carregando
+                ? const CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: () async {
+                      setState(() => carregando = true);
 
-                await pedidoService.salvarPedido(
-                  total,
-                  carrinho.map((p) => p.nome).toList(),
-                );
+                      try {
+                        final pedidoService = PedidoService();
+                        await pedidoService.salvarPedido(
+                          total,
+                          carrinho.map((p) => p.nome).toList(),
+                        );
 
-                carrinho.clear();
-                quantidade.clear();
+                        // Limpa carrinho e quantidades
+                        carrinho.clear();
+                        quantidade.clear();
 
-                Navigator.pop(context);
+                        if (!mounted) return;
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Pedido salvo no banco")),
-                );
-              },
-              child: const Text("Finalizar Pedido"),
-            ),
+                        setState(() => carregando = false);
+
+                        // Fecha a página de checkout
+                        Navigator.pop(context);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Pedido salvo com sucesso"),
+                          ),
+                        );
+                      } catch (e) {
+                        if (!mounted) return;
+                        setState(() => carregando = false);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Erro ao salvar pedido: $e")),
+                        );
+                      }
+                    },
+                    child: const Text('Finalizar Pedido'),
+                  ),
           ],
         ),
       ),
