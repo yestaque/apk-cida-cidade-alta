@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:qr_flutter/qr_flutter.dart';
 import 'services/pedido_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 
@@ -72,6 +73,16 @@ class WeatherService {
     } else {
       throw Exception("Erro ao buscar clima: ${response.body}");
     }
+  }
+}
+
+Future<void> abrirWhatsApp() async {
+  final Uri url = Uri.parse(
+    "https://wa.me/5584991666404?text=Olá%20Gabriel,%20quero%20um%20site%20ou%20app",
+  );
+
+  if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+    throw 'Não foi possível abrir o WhatsApp';
   }
 }
 
@@ -513,6 +524,11 @@ class HomePage extends StatelessWidget {
 
         const SizedBox(height: 10),
 
+        const Text(
+  "Mais vendidos",
+  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+),
+
         SizedBox(
           height: 220,
           child: ListView.builder(
@@ -529,6 +545,7 @@ class HomePage extends StatelessWidget {
                   child: Column(
                     children: [
                       Expanded(child: Image.asset(p.imagem, fit: BoxFit.cover)),
+                      
 
                       Padding(
                         padding: const EdgeInsets.all(8),
@@ -573,6 +590,18 @@ class HomePage extends StatelessWidget {
           ],
         ),
 
+        Container(
+  padding: const EdgeInsets.all(16),
+  decoration: BoxDecoration(
+    color: Colors.purple,
+    borderRadius: BorderRadius.circular(12),
+  ),
+  child: const Text(
+    "Promoção da Semana 🔥\nVestidos por R\$20",
+    style: TextStyle(fontSize: 18),
+  ),
+),
+
         const SizedBox(height: 30),
 
         const Text(
@@ -592,10 +621,18 @@ class HomePage extends StatelessWidget {
           },
           child: const Text('Sobre o Desenvolvedor'),
         ),
+
+        ElevatedButton.icon(
+  onPressed: abrirWhatsApp,
+  icon: const Icon(Icons.chat),
+  label: const Text("Falar no WhatsApp"),
+)
       ],
     );
   }
 }
+
+
 
 class CategoriaItem extends StatelessWidget {
   final IconData icon;
