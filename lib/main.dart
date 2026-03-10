@@ -924,44 +924,59 @@ class _CheckoutPixPageState extends State<CheckoutPixPage> {
             SelectableText('Chave PIX: 84992160269'),
             const Spacer(),
             carregando
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: () async {
-                      setState(() => carregando = true);
+    ? const CircularProgressIndicator()
+    : ElevatedButton(
+        onPressed: () async {
+          setState(() {
+            carregando = true;
+          });
 
-                      try {
-                        final pedidoService = PedidoService();
-                        await pedidoService.salvarPedido(
-                          total,
-                          carrinho.map((p) => p.nome).toList(),
-                        );
+          try {
+            final pedidoService = PedidoService();
 
-                        // Limpa carrinho e quantidades
-                        carrinho.clear();
-                        quantidade.clear();
+            double total = carrinho.fold(
+              0,
+              (s, p) => s + (p.preco * (quantidade[p] ?? 1)),
+            );
 
-                        if (!mounted) return;
+            List<String> produtosPedido =
+                carrinho.map((p) => p.nome).toList();
 
-                        setState(() => carregando = false);
+            await pedidoService.salvarPedido(total, produtosPedido);
 
-                        // Fecha a página de checkout
-                        Navigator.pop(context);
+            // limpar carrinho
+            carrinho.clear();
+            quantidade.clear();
 
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Pedido salvo com sucesso"),
-                          ),
-                        );
-                      } catch (e) {
-                        if (!mounted) return;
-                        setState(() => carregando = false);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text("Erro ao salvar pedido: $e")),
-                        );
-                      }
-                    },
-                    child: const Text('Finalizar Pedido'),
-                  ),
+            if (!mounted) return;
+
+            setState(() {
+              carregando = false;
+            });
+
+            Navigator.pop(context);
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Pedido finalizado com sucesso"),
+              ),
+            );
+          } catch (e) {
+            if (!mounted) return;
+
+            setState(() {
+              carregando = false;
+            });
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Erro ao finalizar pedido: $e"),
+              ),
+            );
+          }
+        },
+        child: const Text("Finalizar Pedido"),
+      ),
           ],
         ),
       ),

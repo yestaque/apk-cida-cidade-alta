@@ -5,19 +5,17 @@ class PedidoService {
 
   Future<void> salvarPedido(double total, List<String> produtos) async {
     try {
-      print("Salvando pedido no Firestore...");
-
       await _db.collection("pedidos").add({
         "total": total,
         "produtos": produtos,
-        "data": DateTime.now(),
+        "data": Timestamp.now(), // melhor para Firestore
         "status": "pendente",
-      });
+      }).timeout(const Duration(seconds: 10));
 
-      print("Pedido salvo no Firestore!");
+      print("Pedido salvo com sucesso");
     } catch (e) {
-      print("Erro ao salvar pedido no Firestore: $e");
-      throw e; // Repassa o erro para o botão tratar
+      print("Erro ao salvar pedido: $e");
+      rethrow;
     }
   }
 }

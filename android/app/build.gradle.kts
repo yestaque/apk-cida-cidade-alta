@@ -31,7 +31,16 @@ android {
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+    }buildscript {
+    repositories {
+        google()
+        mavenCentral()
     }
+
+    dependencies {
+        classpath 'com.google.gms:google-services:4.3.15'
+    }
+}
 
     buildTypes {
         release {
